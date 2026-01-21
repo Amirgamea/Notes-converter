@@ -5,34 +5,30 @@ FROM node:20-slim AS frontend-builder
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 RUN npm install
 
-# Copy source code
 COPY . .
 
-# Build frontend
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # ============================================
 # Stage 2: Production Runtime
 # ============================================
-FROM pandoc/core:3.1-ubuntu
+FROM pandoc/core:latest-ubuntu
 
 WORKDIR /app
 
-# Install Node.js + LibreOffice + Font dependencies
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install Node.js + LibreOffice + Fonts
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
-    gnupg \
-    # LibreOffice for PDF conversion
     libreoffice-writer \
     libreoffice-calc \
     libreoffice-java-common \
-    # Font rendering libraries
     fontconfig \
     fonts-liberation \
     fonts-noto \
@@ -41,29 +37,25 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy built frontend from Stage 1
+# Copy built frontend
 COPY --from=frontend-builder /app/dist ./dist
 
-# Copy backend and conversion assets
+# Copy backend
 COPY package*.json server.js ./
 COPY lib/ ./lib/
 COPY services/ ./services/
-
-# ⚠️ CRITICAL: Copy Lua filter (NOT compile it)
 COPY filters/ ./filters/
-
-# ⚠️ CRITICAL: Copy reference template
 COPY assets/reference.docx ./assets/reference.docx
 
-# Install custom fonts to system
-COPY assets/fonts/*.ttf /usr/share/fonts/truetype/custom/
-COPY assets/fonts/*.otf /usr/share/fonts/opentype/custom/
+# Install fonts to system
+COPY assets/fonts/*.ttf /usr/share/fonts/truetype/custom/ 2>/dev/null || true
+COPY assets/fonts/*.otf /usr/share/fonts/opentype/custom/ 2>/dev/null || true
 RUN fc-cache -fv
 
 # Install production dependencies
 RUN npm install --only=production && npm cache clean --force
 
-# Create working directories
+# Create directories
 RUN mkdir -p /tmp/uploads /tmp/outputs assets/emoji && \
     chmod 777 /tmp/uploads /tmp/outputs assets/emoji
 
@@ -79,4 +71,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 EXPOSE 3000
 
+# ⚠️ CRITICAL FIX: Override Pandoc's entrypoint
+ENTRYPOINT []
+
+# Now this runs as "node server.js" not "pandoc node server.js"
 CMD ["node", "server.js"]

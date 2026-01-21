@@ -47,9 +47,9 @@ COPY services/ ./services/
 COPY filters/ ./filters/
 COPY assets/reference.docx ./assets/reference.docx
 
-# Install fonts to system
-COPY assets/fonts/*.ttf /usr/share/fonts/truetype/custom/ 2>/dev/null || true
-COPY assets/fonts/*.otf /usr/share/fonts/opentype/custom/ 2>/dev/null || true
+# Install custom fonts to system (no shell operators!)
+RUN mkdir -p /usr/share/fonts/truetype/custom /usr/share/fonts/opentype/custom
+COPY assets/fonts/ /usr/local/share/fonts/custom/
 RUN fc-cache -fv
 
 # Install production dependencies
@@ -71,8 +71,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 EXPOSE 3000
 
-# ⚠️ CRITICAL FIX: Override Pandoc's entrypoint
+# Override Pandoc's entrypoint
 ENTRYPOINT []
 
-# Now this runs as "node server.js" not "pandoc node server.js"
 CMD ["node", "server.js"]

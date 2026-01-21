@@ -96,7 +96,7 @@ COPY filters/ ./filters/
 COPY assets/ ./assets/
 
 # Install ONLY production dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # Install custom BearSansUI fonts to system
 COPY assets/fonts /usr/share/fonts/truetype/bearsansui

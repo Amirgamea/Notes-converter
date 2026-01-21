@@ -51,7 +51,7 @@ RUN ls -lh /app/dist
 # ============================================
 # Stage 3: Final Production Image
 # ============================================
-FROM pandoc/core:3.1.11-ubuntu
+FROM pandoc/core:latest-ubuntu
 
 WORKDIR /app
 

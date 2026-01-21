@@ -1,9 +1,13 @@
 # ============================================
 # Stage 1: Build Haskell Filter
 # ============================================
-FROM haskell:9.2-slim AS haskell-builder
+# UPDATED: Switched to 9.4 to avoid EOL Debian Buster repositories
+FROM haskell:9.4-slim AS haskell-builder
 
 WORKDIR /build
+
+# UPDATED: Add noninteractive to suppress "dialog" warnings
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies for Haskell build
 RUN apt-get update && apt-get install -y \
@@ -30,7 +34,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (including dev dependencies for build)
+# Install ALL dependencies
 RUN npm install
 
 # Copy source code
@@ -44,6 +48,9 @@ COPY filters/ ./filters/
 COPY public/ ./public/
 COPY assets/ ./assets/
 
+# UPDATED: specific NODE_OPTIONS for the build stage to prevent OOM
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # Build the frontend
 RUN npm run build
 
@@ -56,6 +63,9 @@ RUN ls -lh /app/dist
 FROM pandoc/core:latest-ubuntu
 
 WORKDIR /app
+
+# UPDATED: Add noninteractive to suppress warnings
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Install Node.js + LibreOffice + Fonts
 RUN apt-get update && apt-get install -y \
@@ -98,7 +108,8 @@ RUN mkdir -p /tmp/uploads /tmp/outputs assets/emoji && \
 # Environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV NODE_OPTIONS="--max-old-space-size=400"
+# UPDATED: Increased memory limit for runtime as well
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 ENV HOME=/tmp
 
 # Health check

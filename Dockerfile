@@ -34,13 +34,22 @@ COPY package*.json ./
 RUN npm ci
 
 # Copy source code
+FROM node:20-slim AS builder
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
 COPY index.html ./
 COPY vite.config.ts ./
 COPY tsconfig.json ./
+COPY lib/ ./lib/
 COPY components/ ./components/
 COPY services/ ./services/
-COPY src/ ./src/
+COPY filters/ ./filters/
 COPY public/ ./public/
+COPY assets/ ./assets/
+
 
 # Build the frontend
 RUN npm run build

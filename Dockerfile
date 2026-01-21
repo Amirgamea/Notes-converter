@@ -34,12 +34,6 @@ COPY package*.json ./
 RUN npm install
 
 # Copy source code
-FROM node:20-slim AS builder
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
 COPY index.html ./
 COPY vite.config.ts ./
 COPY tsconfig.json ./
@@ -49,7 +43,6 @@ COPY services/ ./services/
 COPY filters/ ./filters/
 COPY public/ ./public/
 COPY assets/ ./assets/
-
 
 # Build the frontend
 RUN npm run build
@@ -64,7 +57,7 @@ FROM pandoc/core:latest-ubuntu
 
 WORKDIR /app
 
-# ⬇️ UPDATED: Install Node.js + LibreOffice + Fonts ⬇️
+# Install Node.js + LibreOffice + Fonts
 RUN apt-get update && apt-get install -y \
     curl \
     libreoffice-writer \
@@ -91,10 +84,10 @@ COPY lib/ ./lib/
 COPY filters/ ./filters/
 COPY assets/ ./assets/
 
-# Install ONLY production dependencies (no devDependencies)
+# Install ONLY production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# ⬇️ NEW: Install custom BearSansUI fonts to system ⬇️
+# Install custom BearSansUI fonts to system
 COPY assets/fonts /usr/share/fonts/truetype/bearsansui
 RUN fc-cache -f -v
 

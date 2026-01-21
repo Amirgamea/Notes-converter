@@ -1,15 +1,16 @@
 # ============================================
 # Stage 1: Build Haskell Filter
 # ============================================
-# UPDATED: Switched to 9.4 to avoid EOL Debian Buster repositories
-FROM haskell:9.4-slim AS haskell-builder
+# FIXED: Upgraded to 9.6-slim which uses Debian 12 (Bookworm)
+# This fixes the "buster Release 404" errors completely.
+FROM haskell:9.6-slim AS haskell-builder
 
 WORKDIR /build
 
-# UPDATED: Add noninteractive to suppress "dialog" warnings
+# Suppress warnings
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies for Haskell build
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -48,7 +49,7 @@ COPY filters/ ./filters/
 COPY public/ ./public/
 COPY assets/ ./assets/
 
-# UPDATED: specific NODE_OPTIONS for the build stage to prevent OOM
+# SAFETY: Prevent "Out of Memory" crashes during build
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Build the frontend
@@ -64,7 +65,7 @@ FROM pandoc/core:latest-ubuntu
 
 WORKDIR /app
 
-# UPDATED: Add noninteractive to suppress warnings
+# Suppress warnings
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install Node.js + LibreOffice + Fonts
@@ -108,7 +109,7 @@ RUN mkdir -p /tmp/uploads /tmp/outputs assets/emoji && \
 # Environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
-# UPDATED: Increased memory limit for runtime as well
+# Runtime memory limit
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 ENV HOME=/tmp
 
